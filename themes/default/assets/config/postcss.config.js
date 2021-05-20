@@ -4,26 +4,26 @@
  * at the end to do more transformations.
  */
 
-// Note whether we're in "production" mode, so we can avoid doing post-processing and
-// optimization during development.
-const isProduction = process.env.NODE_ENV === "production";
+const plugins = [
 
-module.exports = {
-    plugins: [
-        // TailwindCSS
-        require("tailwindcss")("./assets/config/tailwind.config.js"),
+    // TailwindCSS
+    require("tailwindcss")("./assets/config/tailwind.config.js"),
+];
+
+if (process.env.NODE_ENV === "production") {
+    plugins.push(
 
         // Apply vendor prefixes for CSS features that aren't
         // fully supported yet.
-        isProduction ? require("autoprefixer")({
+        require("autoprefixer")({
             overrideBrowserslist: [
                 "last 2 versions"
             ]
-        }) : null,
+        }),
 
         // Remove whitespace, comments and other safe things.
         // https://cssnano.co/guides/getting-started/
-        isProduction ? require("cssnano")({
+        require("cssnano")({
             preset: [
                 "default",
                 {
@@ -32,11 +32,11 @@ module.exports = {
                     },
                 },
             ],
-        }) : null,
+        }),
 
         // Use PurgeCSS to remove unused classes for better page speed.
         // Docs: https://purgecss.com/plugins/postcss.html
-        isProduction ? require("@fullhuman/postcss-purgecss")({
+        require("@fullhuman/postcss-purgecss")({
             // Specify the paths to all of the template files in your project
             content: [
                 // All layout files.
@@ -60,39 +60,40 @@ module.exports = {
                 "./content/docs/reference/pkg/_index.md",
             ],
 
-            // Whitelist specific classes that were being removed.
-            whitelist: [
-                "supported-cicd-platforms", ":not", ":target", "md:max-w-lg", "blink", "typing",
-                "char", "resource-deprecated", "btn-scroll-top", "section-docs",
-                "supporting-types"
-            ],
+            // Safelist specific classes that were being removed.
+            // https://purgecss.com/safelisting.html
+            safelist: {
+                deep: [
+                    /^hs-/,
+                    /^highlight$/,
+                    /^pagination$/,
+                    /^code-/,
+                    /^copy-/,
+                    /^carousel/,
+                    /^st-/,
+                    /^icon-/,
 
-            // Whitelist custom parent selectors and their children.
-            whitelistPatterns: [/^fa-/, /^hs-/, /^highlight$/, /^pagination$/, /^code-/, /^copy-/, /^carousel/, /^bg-/, /^st-/],
-            whitelistPatternsChildren: [
-                /^hs-/,
-                /^highlight$/,
-                /^pagination$/,
-                /^code-/,
-                /^copy-/,
-                /^carousel/,
-                /^st-/,
-
-                // Whitelist our web components along with any of their descendent selectors.
-                /^pulumi-chooser/,
-                /^pulumi-tooltip/,
-                /^pulumi-banner/,
-                /^pulumi-convert/,
-                /^pulumi-greenhouse-jobs-list/,
-                /^pulumi-audio/,
-                /^pulumi-install/,
-            ],
+                    // Safelist our web components along with any of their descendent selectors.
+                    /^pulumi-chooser/,
+                    /^pulumi-tooltip/,
+                    /^pulumi-banner/,
+                    /^pulumi-convert/,
+                    /^pulumi-greenhouse-jobs-list/,
+                    /^pulumi-audio/,
+                    /^pulumi-install/,
+                    /^pulumi-slot-machine/,
+                ],
+            },
 
             // We need to extract the Tailwind screen size selectors (e.g. sm, md, lg)
             // so that we do not strip them out. As long as a class name appears in the HTML
             // in its entirety, PurgeCSS will not remove it.
             // Ex. https://tailwindcss.com/docs/controlling-file-size/#writing-purgeable-html
             defaultExtractor: content => content.match(/[\w-/:]*[\w-/:]/g) || [],
-        }) : null,
-    ],
+        }),
+    );
+}
+
+module.exports = {
+    plugins,
 };

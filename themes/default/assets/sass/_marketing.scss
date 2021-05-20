@@ -30,11 +30,7 @@ body:not(.section-docs):not(.section-blog):not(.section-authors):not(.section-ta
         @apply text-gray-700;
 
         &.text-white {
-            @apply text-white;
-        }
-
-        &.text-black {
-            @apply text-black;
+            color: $white !important;
         }
     }
 
